@@ -1,45 +1,50 @@
+#include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 #include <math.h>
+#include <stdio.h>
 #include <string>
 #include <vector>
-#include <stdio.h>
-#include "task.cpp"
+#include <sstream>
 
 using namespace std;
 
+ofstream fout("output.fasm");
+ifstream fin("input.fasm");
+
 enum code {
-  HALT = 0, //done
-  SYSCALL = 1, //done
-  ADD = 2,   // done
-  ADDI = 3,  // done
-  SUB = 4,   // done
-  SUBI = 5,  // done
-  MUL = 6,   // done
-  MULI = 7,  // done
-  DIV = 8,   // done
-  DIVI = 9,  // done
-  LC = 12,   // done
-  SHL = 13,  // done
-  SHLI = 14, // done
-  SHR = 15,  // done
-  SHRI = 16, // done
-  AND = 17,  // done, named and_
-  ANDI = 18, // done
-  OR = 19,   // done named or_
-  ORI = 20,  // done
-  XOR = 21,  // done named xor_
-  XORI = 22, // done
-  NOT = 23,  // done named not_
-  MOV = 24,  // done
-  ADDD = 32, // done
-  SUBD = 33, // done
-  MULD = 34, // done
-  DIVD = 35, // done
-  ITOD = 36, // done
-  DTOI = 37, // done
-  PUSH = 38, // done
-  POP = 39,  // done
+  HALT = 0,    // done
+  SYSCALL = 1, // done
+  ADD = 2,     // done
+  ADDI = 3,    // done
+  SUB = 4,     // done
+  SUBI = 5,    // done
+  MUL = 6,     // done
+  MULI = 7,    // done
+  DIV = 8,     // done
+  DIVI = 9,    // done
+  LC = 12,     // done
+  SHL = 13,    // done
+  SHLI = 14,   // done
+  SHR = 15,    // done
+  SHRI = 16,   // done
+  AND = 17,    // done, named and_
+  ANDI = 18,   // done
+  OR = 19,     // done named or_
+  ORI = 20,    // done
+  XOR = 21,    // done named xor_
+  XORI = 22,   // done
+  NOT = 23,    // done named not_
+  MOV = 24,    // done
+  ADDD = 32,   // done
+  SUBD = 33,   // done
+  MULD = 34,   // done
+  DIVD = 35,   // done
+  ITOD = 36,   // done
+  DTOI = 37,   // done
+  PUSH = 38,   // done
+  POP = 39,    // done
   CALL = 40,
   CALLI = 41,
   RET = 42,
@@ -72,63 +77,29 @@ struct cmds_info {
   string n;
   enum mode m;
 } cmds_info[] = {
-  {HALT, "halt", RI},
-  {SYSCALL, "syscall", RI},
-  {ADD, "add", RR},
-  {ADDI, "addi", RI},
-  {SUB, "sub", RR},
-  {SUBI, "subi", RI},
-  {MUL, "mul", RR},
-  {MULI, "muli", RI},
-  {DIV, "div", RR},
-  {DIVI, "divi", RI},
-  {LC, "lc", RI},
-  {SHL, "shl", RR},
-  {SHLI, "shli", RI},
-  {SHR, "shr", RR},
-  {SHRI, "shri", RI},
-  {AND, "and", RR},
-  {ANDI, "andi", RI},
-  {OR, "or", RR},
-  {ORI, "ori", RI},
-  {XOR, "xor", RR},
-  {XORI, "xori", RI},
-  {NOT, "not", RI},
-  {MOV, "mov", RR},
-  {ADDD, "addd", RR},
-  {SUBD, "subd", RR},
-  {MULD, "muld", RR},
-  {DIVD, "divd", RR},
-  {ITOD, "itod", RR},
-  {DTOI, "dtoi", RR},
-  {PUSH, "push", RI},
-  {POP, "pop", RI},
-  {CALL, "call", RR},
-  {CALLI, "calli", RM},
-  {RET, "ret", RI},
-  {CMP, "cmp", RR},
-  {CMPI, "cmpi", RI},
-  {CMPD, "cmpd", RR},
-  {JMP, "jmp", RM},
-  {JNE, "jne", RM},
-  {JEQ, "jeq", RM},
-  {JLE, "jle", RM},
-  {JL, "jl", RM},
-  {JGE, "jge", RM},
-  {JG, "jg", RM},
-  {LOAD, "load", RM},
-  {STORE, "store", RM},
-  {LOAD2, "load2", RM},
-  {STORE2, "store2", RM},
-  {LOADR, "loadr", RR},
-  {STORER, "storer", RR},
-  {LOADR2, "loadr2", RM},
-  {STORER2, "storer2", RR},
-    };
+    {HALT, "halt", RI},       {SYSCALL, "syscall", RI}, {ADD, "add", RR},
+    {ADDI, "addi", RI},       {SUB, "sub", RR},         {SUBI, "subi", RI},
+    {MUL, "mul", RR},         {MULI, "muli", RI},       {DIV, "div", RR},
+    {DIVI, "divi", RI},       {LC, "lc", RI},           {SHL, "shl", RR},
+    {SHLI, "shli", RI},       {SHR, "shr", RR},         {SHRI, "shri", RI},
+    {AND, "and", RR},         {ANDI, "andi", RI},       {OR, "or", RR},
+    {ORI, "ori", RI},         {XOR, "xor", RR},         {XORI, "xori", RI},
+    {NOT, "not", RI},         {MOV, "mov", RR},         {ADDD, "addd", RR},
+    {SUBD, "subd", RR},       {MULD, "muld", RR},       {DIVD, "divd", RR},
+    {ITOD, "itod", RR},       {DTOI, "dtoi", RR},       {PUSH, "push", RI},
+    {POP, "pop", RI},         {CALL, "call", RR},       {CALLI, "calli", RM},
+    {RET, "ret", RI},         {CMP, "cmp", RR},         {CMPI, "cmpi", RI},
+    {CMPD, "cmpd", RR},       {JMP, "jmp", RM},         {JNE, "jne", RM},
+    {JEQ, "jeq", RM},         {JLE, "jle", RM},         {JL, "jl", RM},
+    {JGE, "jge", RM},         {JG, "jg", RM},           {LOAD, "load", RM},
+    {STORE, "store", RM},     {LOAD2, "load2", RM},     {STORE2, "store2", RM},
+    {LOADR, "loadr", RR},     {STORER, "storer", RR},   {LOADR2, "loadr2", RM},
+    {STORER2, "storer2", RR},
+};
 
 class Register {
 public:
-  long int word; // value (32bit)
+  int word; // value (32bit)
   Register() {
     word = 0;
     condition = "";
@@ -140,14 +111,11 @@ vector<Register> r(17); // all registers without flags
 Register flags;
 
 
+map<string, int> label;
 
-void load(int suffix, int adress) {
-  r[suffix].word = Memory[adress];
-}
+void load(int suffix, int adress) { r[suffix].word = Memory[adress]; }
 
-void store(int suffix, int adress) {
-  Memory[adress] = r[suffix].word;
-}
+void store(int suffix, int adress) { Memory[adress] = r[suffix].word; }
 
 void load2(int suffix, int adress) {
   r[suffix].word = Memory[adress];
@@ -314,12 +282,13 @@ void dtoi(int suffix1, int suffix2, int delta) {
   r[suffix1].word = (long int)d; // ignore frac
 }
 
-void push(int suffix, int imm) {
+void push (int suffix, int imm) {
   r[14].word--;
   Memory[r[14].word] = r[suffix].word + imm;
+//  cout << "we pushed "<< Memory[r[14].word] << endl;
 }
 
-void pop(int suffix, int imm) {
+void pop (int suffix, int imm) {
   r[suffix].word = Memory[r[14].word] + imm;
   r[14].word++;
 }
@@ -366,7 +335,7 @@ void cmpd(int suffix1, int suffix2, int delta) {
   }
 }
 
-void syscall(int suffix, int code) {
+void syscall (int suffix, int code) {
   double d;
   long long ans;
   char c;
@@ -374,44 +343,187 @@ void syscall(int suffix, int code) {
   case 0:
     return;
   case 100:
-    cin >> r[suffix].word;
+    fin >> r[suffix].word;
     break;
   case 101:
-    cin >> d;
+    fin >> d;
     ans = *(long long *)&d;
     r[suffix].word = ans % (long long)pow(2, 32);
     r[suffix + 1].word = ans >> 32;
     break;
   case 102:
-    cout << r[suffix].word << "\n";
+    fout << r[suffix].word << "\n";
     break;
   case 103:
     ans = (long long)r[suffix + 1].word * (long long)pow(2, 32) +
           (long long)r[suffix].word;
     d = *(double *)&ans;
-    cout << d << "\n";
+    printf("%lg\n", d);
     break;
   case 104:
-    cin >> c;
+    fin >> c;
     r[suffix].word = *(long int *)&c;
     break;
   case 105:
     c = *(char *)&r[suffix].word;
-    cout << c << "\n";
+    fout << c << "\n";
     break;
   }
 }
 
-void halt (int suffix, int delta) {
+void halt(int suffix, int delta) {}
+
+void calli (string l) {
+  push (15, 1);
+  //cout << "calli->index " << r[15].word << endl;
+  r[15].word = label[l];
 }
 
+void ret (string s) {
+  r[15].word = Memory[r[14].word];
+//  cout << "r15 from ret is " << r[15].word << endl;
+
+  int imm = stoi(s);
+  r[14].word += imm + 1;
+}
+
+void call (int suffix1, int suffix2, int imm) {
+  //push (15, 1);
+  r[suffix1].word = r[15].word = r[suffix2].word;
+}
+
+void jmp (string l) {
+  r[15].word = label[l];
+}
+
+void jne (string l) {
+  if (flags.condition != "==") {
+    r[15].word = label[l];
+  }
+  else {r[15].word++;}
+}
+
+void jeq (string l) {
+  if (flags.condition == "==") {
+    r[15].word = label[l];
+  }
+  else {r[15].word++;}
+}
+
+void jle (string l) {
+  if (flags.condition == "==" || flags.condition == "<") {
+    r[15].word = label[l];
+  }
+  else {r[15].word++;}
+}
+
+void jl (string l) {
+  if (flags.condition == "<") {
+    r[15].word = label[l];
+  }
+  else {r[15].word++;}
+}
+
+void jge (string l) {
+  if (flags.condition == "==" || flags.condition == ">") {
+    r[15].word = label[l];
+  }
+  else {r[15].word++;}
+}
+
+void jg (string l) {
+  if (flags.condition == ">") {
+    r[15].word = label[l];
+  }
+  else {r[15].word++;}
+}
+
+std::set <int> special;
+std::map <int, string> execute;
 
 
+int code_to_memory() {
+  int index = 0; // index to Memory
+  while (!fin.eof()) {
+    string s;
+    fin >> s;
+
+    if (s[s.length() - 1] == ':') {
+    label[s] = index;
+    //  cout << "inserted " << s <<"->" << label[s] << endl;
+      continue;
+    }
+
+    if (s == "end") {
+      string start;
+      fin >> start;
+      r[15].word = label[start + ":"];
+    //  cout << "we start from " << label[start + ":"] << endl;
+      execute[index] = "end";
+    //  cout << execute[index] << endl;
+      return 0;
+    }
+
+    for (int i = 0; i < 52; i++) {
+
+      if (cmds_info[i].n == s) {
+        if (cmds_info[i].m == RM || cmds_info[i].m == RI) {
+
+
+          if ( special.find(cmds_info[i].c) != special.end() ) {
+            string l;
+            fin >> l;
+            int token_code = cmds_info[i].c;
+            int token = (token_code << 24) + label[l];
+            execute[index] = s + " " + l;
+          //  cout << index << "-> " << execute[index] << endl;
+            Memory[index++] = token;
+            break;
+          }
+
+          string reg, delta;
+          char r;
+          fin >> r >> reg >> delta;
+
+          int reg_int = stoi(reg);
+          int delta_int = stoi(delta);
+          int token_code = cmds_info[i].c;
+
+          int token = (token_code << 24) + (reg_int << 20) + delta_int;
+          execute[index] = s + " r" + reg + " " + delta;
+        //  cout << index << "-> " << execute[index] << endl;
+
+          Memory[index++] = token;
+        }
+
+        if (cmds_info[i].m == RR) {
+          string reg1, reg2, delta;
+          char r1, r2;
+          fin >> r1 >> reg1 >> r2 >> reg2 >> delta;
+
+          int reg1_int = stoi(reg1);
+          int reg2_int = stoi(reg2);
+          int delta_int = stoi(delta);
+          int token_code = cmds_info[i].c;
+
+          int token = (token_code << 24) + (reg1_int << 20) + (reg2_int << 16) +
+                      delta_int;
+          execute[index] = s + " r" + reg1 + " r" + reg2 + " " + delta;
+        //  cout << index << "-> "<< execute[index] << endl;
+
+          Memory[index++] = token;
+        }
+      }
+    }
+  }
+  return 0;
+}
 
 
 int main() {
 
-  vector<void(*)(int, int)> cmds_RM_RI(72); //pointers to functions
+
+  vector<void (*)(int, int)> cmds_RM_RI(72); // pointers to functions
   cmds_RM_RI[HALT] = halt;
   cmds_RM_RI[SYSCALL] = syscall;
   cmds_RM_RI[ADDI] = addi;
@@ -427,14 +539,13 @@ int main() {
   cmds_RM_RI[NOT] = not_;
   cmds_RM_RI[PUSH] = push;
   cmds_RM_RI[POP] = pop;
-  //calli
   cmds_RM_RI[CMPI] = cmpi;
   cmds_RM_RI[LOAD] = load;
   cmds_RM_RI[STORE] = store;
   cmds_RM_RI[LOAD2] = load2;
   cmds_RM_RI[STORE2] = store2;
 
-  vector<void(*)(int, int, int)> cmds_RR(72); //pointers to functions
+  vector<void (*)(int, int, int)> cmds_RR(72); // pointers to functions
   cmds_RR[ADD] = add;
   cmds_RR[SUB] = sub;
   cmds_RR[MUL] = mul;
@@ -457,52 +568,88 @@ int main() {
   cmds_RR[STORER] = storer;
   cmds_RR[LOADR2] = loadr2;
   cmds_RR[STORER2] = storer2;
+  cmds_RR[CALL] = call;
 
 
-  int index = r[15].word = 0; //index to Memory
+  special.insert(CALLI);
+  special.insert(RET);
+  special.insert(JMP);
+  special.insert(JNE);
+  special.insert(JEQ);
+  special.insert(JLE);
+  special.insert(JL);
+  special.insert(JGE);
+  special.insert(JG);
+
+
+
+
+
+  vector<void (*)(string)> spec_func(72); // pointers to functions
+  spec_func[CALLI] = calli;
+  spec_func[RET] = ret;
+  spec_func[JMP] = jmp;
+  spec_func[JNE] = jne;
+  spec_func[JEQ] = jeq;
+  spec_func[JLE] = jle;
+  spec_func[JL] = jl;
+  spec_func[JGE] = jge;
+  spec_func[JG] = jg;
+
+
+
+  code_to_memory();
+
+  r[14].word = 1048575;
+
   string s;
-  cin >> s;
-for(int i = 0; i < 52; i++) {
-  if (cmds_info[i].n == s) {
 
-    if (cmds_info[i].m == RM || cmds_info[i].m == RI) {  //works well!!!
-      string reg, delta;
-      char r;
-      cin >> r >> reg >> delta;
-      //cout << cmds_info[i].n << " " << reg << " " << delta << endl;
+  fout << "lambda" << endl;
+ while (s != "end") {
+  stringstream x;
+  x << execute[r[15].word];
+//  cout << "current -> " << execute[r[15].word] << endl;
+  x >> s;
+    for (int i = 0; i < 52; i++) {
+      if (cmds_info[i].n == s) {
 
-      int reg_int = stoi(reg);
-      int delta_int = stoi(delta);
-      int token_code = cmds_info[i].c;
+        if (cmds_info[i].m == RM || cmds_info[i].m == RI) {
 
-      //cout <<"token_code "<< token_code << endl;
-      int token = (token_code << 24) + (reg_int << 20) + delta_int;
-      Memory[index++] = token;
-      //show_bytes(sizeof(int), &token);
-      cmds_RM_RI[cmds_info[i].c](reg_int, delta_int);
+          if ( special.find(cmds_info[i].c) != special.end() ) {
+            string l;
+            x >> l;
+            spec_func[cmds_info[i].c](l + ":");
+            continue;
+          }
 
+          string reg, delta;
+          char r_char;
+          x >> r_char >> reg >> delta;
+
+          int reg_int = stoi(reg);
+          int delta_int = stoi(delta);
+
+          cmds_RM_RI[cmds_info[i].c](reg_int, delta_int); //falls here
+          r[15].word++;
+        }
+
+        if (cmds_info[i].m == RR) {
+          string reg1, reg2, delta;
+          char r1, r2;
+          x >> r1 >> reg1 >> r2 >> reg2 >> delta;
+
+          int reg1_int = stoi(reg1);
+          int reg2_int = stoi(reg2);
+          int delta_int = stoi(delta);
+
+          cmds_RR[cmds_info[i].c](reg1_int, reg2_int, delta_int);
+          r[15].word++;
+        }
+      }
     }
-
-    if(cmds_info[i].m == RR) {  //works well!!!
-      string reg1, reg2, delta;
-      char r1, r2;
-      cin >> r1 >> reg1 >> r2 >> reg2 >> delta;
-
-      int reg1_int = stoi(reg1);
-      int reg2_int = stoi(reg2);
-      int delta_int = stoi(delta);
-      int token_code = cmds_info[i].c;
-
-      //cout << cmds_info[i].n << " " << reg1_int << " " << reg2_int << " " << delta_int << "\n";
-
-      int token = (token_code << 24) + (reg1_int << 20) + (reg2_int << 16) + delta_int;
-      Memory[index++] = token;
-      //show_bytes(sizeof(int), &token);
-    }
-
-
-  }
 }
 
+  fin.close();
+  fout.close();
   return 0;
 }
