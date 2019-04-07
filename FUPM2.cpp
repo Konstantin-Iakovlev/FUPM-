@@ -1,16 +1,16 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <set>
 #include <math.h>
+#include <set>
+#include <sstream>
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include <sstream>
 
 using namespace std;
 
-ifstream fin("/ProgrammingC/input.fasm");
+ifstream fin("ProgrammingC/input.fasm");
 
 enum code {
   HALT = 0,    // done
@@ -92,9 +92,10 @@ struct cmds_info {
     {JEQ, "jeq", RM},         {JLE, "jle", RM},         {JL, "jl", RM},
     {JGE, "jge", RM},         {JG, "jg", RM},           {LOAD, "load", RM},
     {STORE, "store", RM},     {LOAD2, "load2", RM},     {STORE2, "store2", RM},
-    {LOADR, "loadr", RR},     {STORER, "storer", RR},   {LOADR2, "loadr2", RM},
+    {LOADR, "loadr", RR},     {STORER, "storer", RR},   {LOADR2, "loadr2", RR},
     {STORER2, "storer2", RR},
 };
+
 
 class Register {
 public:
@@ -109,170 +110,172 @@ public:
 vector<Register> r(17); // all registers without flags
 Register flags;
 
-
 map<string, int> label;
 
-int load(int suffix, int adress) {
-   r[suffix].word = Memory[adress];
-   return 0;
- }
+int load (int suffix, int adress) {
+  r[suffix].word = Memory[adress];
+  return 0;
+}
 
-int store(int suffix, int adress) {
-   Memory[adress] = r[suffix].word;
-   return 0;
-  }
+int store (int suffix, int adress) {
+  Memory[adress] = r[suffix].word;
+  return 0;
+}
 
-int load2(int suffix, int adress) {
+int load2 (int suffix, int adress) {
   r[suffix].word = Memory[adress];
   r[suffix + 1].word = Memory[adress + 1];
   return 0;
 }
 
-int store2(int suffix, int adress) {
+int store2 (int suffix, int adress) {
   Memory[adress] = r[suffix].word;
   Memory[adress + 1] = r[suffix + 1].word;
   return 0;
 }
 
-int loadr(int suffix1, int suffix2, int delta) {
+int loadr (int suffix1, int suffix2, int delta) {
   r[suffix1].word = Memory[r[suffix2].word + delta];
   return 0;
 }
 
-int storer(int suffix1, int suffix2, int delta) {
+int storer (int suffix1, int suffix2, int delta) {
   Memory[r[suffix2].word + delta] = r[suffix1].word;
   return 0;
 }
 
-int loadr2(int suffix1, int suffix2, int delta) {
+int loadr2 (int suffix1, int suffix2, int delta) {
   r[suffix1].word = Memory[r[suffix2].word + delta];
   r[suffix1 + 1].word = Memory[r[suffix2].word + delta + 1];
   return 0;
 }
 
-int storer2(int suffix1, int suffix2, int delta) {
+int storer2 (int suffix1, int suffix2, int delta) {
   Memory[r[suffix2].word + delta] = r[suffix1].word;
   Memory[r[suffix2].word + delta + 1] = r[suffix1 + 1].word;
   return 0;
 }
 
-int add(int suffix1, int suffix2, int delta) {
+int add (int suffix1, int suffix2, int delta) {
   r[suffix1].word += r[suffix2].word + delta;
   return 0;
 }
 
-int addi(int suffix, int delta) {
-   r[suffix].word += delta;
-   return 0;
- }
+int addi (int suffix, int delta) {
+  r[suffix].word += delta;
+  return 0;
+}
 
-int sub(int suffix1, int suffix2, int delta) {
+int sub (int suffix1, int suffix2, int delta) {
   r[suffix1].word -= r[suffix2].word + delta;
   return 0;
 }
 
-int subi(int suffix, int delta) {
+int subi (int suffix, int delta) {
   r[suffix].word -= delta;
   return 0;
- }
+}
 
-int and_(int suffix1, int suffix2, int delta) {
+int and_ (int suffix1, int suffix2, int delta) {
   r[suffix1].word &= r[suffix2].word + delta;
   return 0;
 }
 
-int andi(int suffix, int imm) {
- r[suffix].word &= imm;
-return 0;
+int andi (int suffix, int imm) {
+  r[suffix].word &= imm;
+  return 0;
 }
 
-int or_(int suffix1, int suffix2, int delta) {
+int or_ (int suffix1, int suffix2, int delta) {
   r[suffix1].word |= r[suffix2].word + delta;
   return 0;
 }
 
-int ori(int suffix, int imm) {
+int ori (int suffix, int imm) {
   r[suffix].word |= imm;
-return 0;
+  return 0;
 }
 
-int xor_(int suffix1, int suffix2, int delta) {
+int xor_ (int suffix1, int suffix2, int delta) {
   r[suffix1].word ^= r[suffix2].word + delta;
   return 0;
 }
 
-int xori(int suffix, int imm) {
- r[suffix].word ^= imm;
- return 0;
+int xori (int suffix, int imm) {
+  r[suffix].word ^= imm;
+  return 0;
 }
 
-int not_(int suffix, int imm) {
+int not_ (int suffix, int imm) {
   r[suffix].word ^= 0xFFFFFFFF;
   imm = 0;
   return 0;
 }
 
-int mov(int suffix1, int suffix2, int delta) {
+int mov (int suffix1, int suffix2, int delta) {
   r[suffix1].word = r[suffix2].word + delta;
   return 0;
 }
 
-int lc(int suffix, int imm) {
-   r[suffix].word = imm;
-return 0;
- }
+int lc (int suffix, int imm) {
+  r[suffix].word = imm;
+  return 0;
+}
 
-int mul(int suffix1, int suffix2, int delta) {
-  long long pro = r[suffix1].word * (r[suffix2].word + delta);
+int mul (int suffix1, int suffix2, int delta) {
+  long long pro =
+      (long long)r[suffix1].word * (long long)(r[suffix2].word + delta);
   r[suffix1].word = pro % (long long)pow(2, 32);
   r[suffix1 + 1].word = pro >> 32;
   return 0;
 }
 
-int muli(int suffix, int imm) {
-  long long pro = r[suffix].word * imm;
+int muli (int suffix, int imm) {
+  long long pro = (long long)r[suffix].word * (long long)imm;
   r[suffix].word = pro % (long long)pow(2, 32);
   r[suffix + 1].word = pro >> 32;
+  //  cout << "r" << suffix <<"= " << r[suffix].word << endl;
+  //  cout << "r"  << suffix + 1 << "="<< r[suffix + 1].word << endl;
   return 0;
 }
 
-int div(int suffix1, int suffix2, int delta) {
+int div (int suffix1, int suffix2, int delta) {
   long long dividend =
-      r[suffix1 + 1].word * (long long)pow(2, 32) + r[suffix1].word;
-  r[suffix1].word = dividend / (r[suffix2].word + delta);
+      (long long)r[suffix1 + 1].word * (long long)pow(2, 32) + (long long)r[suffix1].word;
+  r[suffix1].word = dividend / (r[suffix2].word + (long long)delta);
   r[suffix1 + 1].word = dividend % (r[suffix2].word + delta);
   return 0;
 }
 
-int divi(int suffix, int imm) {
+int divi (int suffix, int imm) {
   long long dividend =
-      r[suffix + 1].word * (long long)pow(2, 32) + r[suffix].word;
+      (long long)r[suffix + 1].word * (long long)pow(2, 32) + (long long)r[suffix].word;
   r[suffix].word = dividend / imm;
   r[suffix + 1].word = dividend % imm;
   return 0;
 }
 
-int shl(int suffix1, int suffix2, int delta) {
+int shl (int suffix1, int suffix2, int delta) {
   r[suffix1].word <<= r[suffix2].word + delta;
   return 0;
 }
 
-int shli(int suffix, int imm) {
-   r[suffix].word <<= imm;
-return 0;
- }
+int shli (int suffix, int imm) {
+  r[suffix].word <<= imm;
+  return 0;
+}
 
-int shr(int suffix1, int suffix2, int delta) {
+int shr (int suffix1, int suffix2, int delta) {
   r[suffix1].word >>= r[suffix2].word + delta;
   return 0;
 }
 
-int shri(int suffix, int imm) {
+int shri (int suffix, int imm) {
   r[suffix].word >>= imm;
-return 0;
+  return 0;
 }
 
-int addd(int suffix1, int suffix2, int delta) {
+int addd (int suffix1, int suffix2, int delta) {
   long long d1 = (long long)r[suffix1 + 1].word * (long long)pow(2, 32) +
                  (long long)r[suffix1].word;
   long long d2 = (long long)r[suffix2 + 1].word * (long long)pow(2, 32) +
@@ -284,7 +287,7 @@ int addd(int suffix1, int suffix2, int delta) {
   return 0;
 }
 
-int subd(int suffix1, int suffix2, int delta) {
+int subd (int suffix1, int suffix2, int delta) {
   long long d1 = (long long)r[suffix1 + 1].word * (long long)pow(2, 32) +
                  (long long)r[suffix1].word;
   long long d2 = (long long)r[suffix2 + 1].word * (long long)pow(2, 32) +
@@ -296,7 +299,7 @@ int subd(int suffix1, int suffix2, int delta) {
   return 0;
 }
 
-int muld(int suffix1, int suffix2, int delta) {
+int muld (int suffix1, int suffix2, int delta) {
   long long d1 = (long long)r[suffix1 + 1].word * (long long)pow(2, 32) +
                  (long long)r[suffix1].word;
   long long d2 = (long long)r[suffix2 + 1].word * (long long)pow(2, 32) +
@@ -308,7 +311,7 @@ int muld(int suffix1, int suffix2, int delta) {
   return 0;
 }
 
-int divd(int suffix1, int suffix2, int delta) {
+int divd (int suffix1, int suffix2, int delta) {
   long long d1 = (long long)r[suffix1 + 1].word * (long long)pow(2, 32) +
                  (long long)r[suffix1].word;
   long long d2 = (long long)r[suffix2 + 1].word * (long long)pow(2, 32) +
@@ -320,11 +323,15 @@ int divd(int suffix1, int suffix2, int delta) {
   return 0;
 }
 
-int itod(int suffix1, int suffix2, int delta) {
-  double d = *(double *)&r[suffix2].word + *(double *)&delta;
-  long long ans = *(long long *)&d;
-  r[suffix1].word = ans % (long long)pow(2, 32);
-  r[suffix1 + 1].word = ans >> 32;
+int itod (int suffix1, int suffix2, int delta) {
+  double d = r[suffix2].word + delta;
+  long long mask = *(long long*)&d;
+  r[suffix1 + 1].word = mask >> 32;
+  r[suffix1].word = mask % (long long)pow(2, 32);
+//  cout<< "\033[1;31m"  << "r" << suffix2 << "= " << r[suffix2].word << "\033[0m\n";
+//  cout<< "\033[1;31m"  << "r" << suffix1 << "= " << r[suffix1].word << "\033[0m\n";
+//  cout<< "\033[1;31m"  << "r" << suffix1 + 1 << "= " << r[suffix1 + 1].word << "\033[0m\n";
+  //  cout << "\033[1;31m" << r[suffix].word << "\033[0m\n";
   return 0;
 }
 
@@ -336,14 +343,14 @@ int dtoi(int suffix1, int suffix2, int delta) {
   return 0;
 }
 
-int push (int suffix, int imm) {
+int push(int suffix, int imm) {
   r[14].word--;
   Memory[r[14].word] = r[suffix].word + imm;
-//  cout << "we pushed "<< Memory[r[14].word] << endl;
-return 0;
+  //  cout << "we pushed "<< Memory[r[14].word] << endl;
+  return 0;
 }
 
-int pop (int suffix, int imm) {
+int pop(int suffix, int imm) {
   r[suffix].word = Memory[r[14].word] + imm;
   r[14].word++;
   return 0;
@@ -372,6 +379,7 @@ int cmpi(int suffix, int imm) {
   if (r[suffix].word == imm) {
     flags.condition = "==";
   }
+  cout << "r" << suffix << "=" << r[suffix].word << " vs " << imm << endl;
   return 0;
 }
 
@@ -394,13 +402,13 @@ int cmpd(int suffix1, int suffix2, int delta) {
   return 0;
 }
 
-int syscall (int suffix, int code) {
+int syscall(int suffix, int code) {
   double d;
   long long ans;
   char c;
   switch (code) {
   case 0:
-    return r[suffix].word;
+    exit(r[suffix].word);
   case 100:
     fin >> r[suffix].word;
     return 0;
@@ -411,6 +419,7 @@ int syscall (int suffix, int code) {
     r[suffix + 1].word = ans >> 32;
     return 0;
   case 102:
+    //  cout << "\033[1;31m" << r[suffix].word << "\033[0m\n";
     cout << r[suffix].word;
     return 0;
   case 103:
@@ -431,85 +440,94 @@ int syscall (int suffix, int code) {
   return 0;
 }
 
-int halt(int suffix, int delta) {return 0;}
+int halt(int suffix, int delta) { return 0; }
 
-int calli (string l) {
-  push (15, 1);
-  //cout << "calli->index " << r[15].word << endl;
+int calli(string l) {
+  push(15, 1);
+  // cout << "calli->index " << r[15].word << endl;
   r[15].word = label[l];
   return 0;
 }
 
-int ret (string s) {
+int ret(string s) {
   r[15].word = Memory[r[14].word];
-//  cout << "r15 from ret is " << r[15].word << endl;
+  //  cout << "r15 from ret is " << r[15].word << endl;
   int imm = stoi(s);
   r[14].word += imm + 1;
   return 0;
 }
 
-int call (int suffix1, int suffix2, int imm) {
-  //push (15, 1);
+int call(int suffix1, int suffix2, int imm) {
+  // push (15, 1);
   r[suffix1].word = r[15].word = r[suffix2].word;
   return 0;
 }
 
-int jmp (string l) {
+int jmp(string l) {
   r[15].word = label[l];
   return 0;
 }
 
-int jne (string l) {
+int jne(string l) {
   if (flags.condition != "==") {
     r[15].word = label[l];
+  } else {
+    r[15].word++;
   }
-  else {r[15].word++;}
   return 0;
 }
 
-int jeq (string l) {
+int jeq(string l) {
   if (flags.condition == "==") {
     r[15].word = label[l];
+  } else {
+    r[15].word++;
   }
-  else {r[15].word++;}
   return 0;
 }
 
-int jle (string l) {
+int jle(string l) {
   if (flags.condition == "==" || flags.condition == "<") {
     r[15].word = label[l];
+  } else {
+    r[15].word++;
   }
-  else {r[15].word++;}
   return 0;
 }
 
-int jl (string l) {
+int jl(string l) {
   if (flags.condition == "<") {
     r[15].word = label[l];
+  } else {
+    r[15].word++;
   }
-  else {r[15].word++;}
   return 0;
 }
 
-int jge (string l) {
+int jge(string l) {
   if (flags.condition == "==" || flags.condition == ">") {
     r[15].word = label[l];
+  } else {
+    r[15].word++;
   }
-  else {r[15].word++;}
   return 0;
 }
 
-int jg (string l) {
+int jg(string l) {
   if (flags.condition == ">") {
     r[15].word = label[l];
+  } else {
+    r[15].word++;
   }
-  else {r[15].word++;}
   return 0;
 }
 
-std::set <int> special;
-std::map <int, string> execute;
-
+std::set<int> special;
+std::map<int, string> execute;
+std::map <string, pair<int, int> > string_cmd;
+std::map <int, vector<int> > args_RR;
+std::map <int, vector<int> > args_RM_RI;
+std::map <int, string> args_special;
 
 int code_to_memory() {
   int index = 0; // index to Memory
@@ -517,9 +535,15 @@ int code_to_memory() {
     string s;
     fin >> s;
 
+    if (s[0] == ';') { //read comments
+      string l;
+      getline (fin, l);
+      continue;
+    }
+
     if (s[s.length() - 1] == ':') {
-    label[s] = index;
-    //  cout << "inserted " << s <<"->" << label[s] << endl;
+      label[s] = index;
+      //  cout << "inserted " << s <<"->" << label[s] << endl;
       continue;
     }
 
@@ -527,69 +551,132 @@ int code_to_memory() {
       string start;
       fin >> start;
       r[15].word = label[start + ":"];
-    //  cout << "we start from " << label[start + ":"] << endl;
+      //  cout << "we start from " << label[start + ":"] << endl;
       execute[index] = "end";
-    //  cout << execute[index] << endl;
+      //  cout << execute[index] << endl;
       return 0;
     }
 
-    for (int i = 0; i < 52; i++) {
+        if (string_cmd[s].second == RM || string_cmd[s].second == RI) {
 
-      if (cmds_info[i].n == s) {
-        if (cmds_info[i].m == RM || cmds_info[i].m == RI) {
-
-
-          if ( special.find(cmds_info[i].c) != special.end() ) {
+          if (special.find(string_cmd[s].first) != special.end()) {
             string l;
             fin >> l;
-            int token_code = cmds_info[i].c;
-            int token = (token_code << 24) + label[l];
+            args_special[index] = l + ":";
+            //    cout << index <<"->"<< s << " args-> " << args_special[index] << endl;
+            int token_code = string_cmd[s].first;
+            int token = (token_code << 24) + label[l+":"];
             execute[index] = s + " " + l;
-          //  cout << index << "-> " << execute[index] << endl;
+            //  cout << index << "-> " << execute[index]  << "args -> "<<label[l+":"] << endl;
             Memory[index++] = token;
-            break;
+            continue;
           }
 
           string reg, delta;
           char r;
           fin >> r >> reg >> delta;
 
+            vector <int> a(2);
           int reg_int = stoi(reg);
+          a[0] = reg_int;
           int delta_int = stoi(delta);
-          int token_code = cmds_info[i].c;
+          a[1] = delta_int;
+          args_RM_RI[index] = a;
+          //  cout <<index <<"->"<< s << " args-> " << args_RM_RI[index][0] << " "<<args_RM_RI[index][1]<<endl;
 
+          int token_code = string_cmd[s].first;
           int token = (token_code << 24) + (reg_int << 20) + delta_int;
           execute[index] = s + " r" + reg + " " + delta;
-        //  cout << index << "-> " << execute[index] << endl;
+          //  cout << index << "-> " << execute[index] << endl;
 
           Memory[index++] = token;
         }
 
-        if (cmds_info[i].m == RR) {
+        if (string_cmd[s].second == RR) {
           string reg1, reg2, delta;
           char r1, r2;
           fin >> r1 >> reg1 >> r2 >> reg2 >> delta;
 
+            vector <int> a(3);
           int reg1_int = stoi(reg1);
+          a[0] = reg1_int;
           int reg2_int = stoi(reg2);
+          a[1] = reg2_int;
           int delta_int = stoi(delta);
-          int token_code = cmds_info[i].c;
+          a[2] = delta_int;
+          args_RR[index] = a;
+          //  cout<<index<<"->" << s << " args-> " <<args_RR[index][0]<<" "<<args_RR[index][1]<<" "<<args_RR[index][2] <<endl;
+          int token_code = string_cmd[s].first;
 
           int token = (token_code << 24) + (reg1_int << 20) + (reg2_int << 16) +
                       delta_int;
           execute[index] = s + " r" + reg1 + " r" + reg2 + " " + delta;
-        //  cout << index << "-> "<< execute[index] << endl;
+          //  cout << index << "-> "<< execute[index] << endl;
 
           Memory[index++] = token;
         }
-      }
-    }
   }
   return 0;
 }
 
 
+
+
 int main() {
+
+  string_cmd["halt"] = pair<int, int>(HALT, RI);
+  string_cmd["syscall"] = pair<int, int>(SYSCALL, RI);
+  string_cmd["add"] = pair<int, int>(ADD, RR);
+  string_cmd["addi"] = pair<int, int>(ADDI, RI);
+  string_cmd["sub"] = pair<int, int>(SUB, RR);
+  string_cmd["subi"] = pair<int, int>(SUBI, RI);
+  string_cmd["mul"] = pair<int, int>(MUL, RR);
+  string_cmd["muli"] = pair<int, int>(MULI, RI);
+  string_cmd["div"] = pair<int, int>(DIV, RR);
+  string_cmd["divi"] = pair<int, int>(DIVI, RI);
+  string_cmd["lc"] = pair<int, int>(LC, RI);
+  string_cmd["shl"] = pair<int, int>(SHL, RR);
+  string_cmd["shli"] = pair<int, int>(SHLI, RI);
+  string_cmd["shr"] = pair<int, int>(SHR, RR);
+  string_cmd["shri"] = pair<int, int>(SHRI, RI);
+  string_cmd["and"] = pair<int, int>(AND, RR);
+  string_cmd["andi"] = pair<int, int>(ANDI, RI);
+  string_cmd["or"] = pair<int, int>(OR, RR);
+  string_cmd["ori"] = pair<int, int>(ORI, RI);
+  string_cmd["xor"] = pair<int, int>(XOR, RR);
+  string_cmd["xori"] = pair<int, int>(XORI, RI);
+  string_cmd["not"] = pair<int, int>(NOT, RI);
+  string_cmd["mov"] = pair<int, int>(MOV, RR);
+  string_cmd["addd"] = pair<int, int>(ADDD, RR);
+  string_cmd["subd"] = pair<int, int>(SUBD, RR);
+  string_cmd["muld"] = pair<int, int>(MULD, RR);
+  string_cmd["divd"] = pair<int, int>(DIVD, RR);
+  string_cmd["itod"] = pair<int, int>(ITOD, RR);
+  string_cmd["dtoi"] = pair<int, int>(DTOI, RR);
+  string_cmd["push"] = pair<int, int>(PUSH, RI);
+  string_cmd["pop"] = pair<int, int>(POP, RI);
+  string_cmd["call"] = pair<int, int>(CALL, RR);
+  string_cmd["calli"] = pair<int, int>(CALLI, RM);
+  string_cmd["ret"] = pair<int, int>(RET, RI);
+  string_cmd["cmp"] = pair<int, int>(CMP, RR);
+  string_cmd["cmpi"] = pair<int, int>(CMPI, RI);
+  string_cmd["cmpd"] = pair<int, int>(CMPD, RR);
+  string_cmd["jmp"] = pair<int, int>(JMP, RM);
+  string_cmd["jne"] = pair<int, int>(JNE, RM);
+  string_cmd["jeq"] = pair<int, int>(JEQ, RM);
+  string_cmd["jle"] = pair<int, int>(JLE, RM);
+  string_cmd["jl"] = pair<int, int>(JL, RM);
+  string_cmd["jge"] = pair<int, int>(JGE, RM);
+  string_cmd["jg"] = pair<int, int>(JG, RM);
+  string_cmd["load"] = pair<int, int>(LOAD, RM);
+  string_cmd["store"] = pair<int, int>(STORE, RM);
+  string_cmd["load2"] = pair<int, int>(LOAD2, RM);
+  string_cmd["store2"] = pair<int, int>(STORE2, RM);
+  string_cmd["loadr"] = pair<int, int>(LOADR, RR);
+  string_cmd["storer"] = pair<int, int>(STORER, RR);
+  string_cmd["loadr2"] = pair<int, int>(LOADR2, RR);
+  string_cmd["storer2"] = pair<int, int>(STORER2, RR);
+
 
 
   vector<int (*)(int, int)> cmds_RM_RI(72); // pointers to functions
@@ -639,7 +726,6 @@ int main() {
   cmds_RR[STORER2] = storer2;
   cmds_RR[CALL] = call;
 
-
   special.insert(CALLI);
   special.insert(RET);
   special.insert(JMP);
@@ -649,10 +735,6 @@ int main() {
   special.insert(JL);
   special.insert(JGE);
   special.insert(JG);
-
-
-
-
 
   vector<int (*)(string)> spec_func(72); // pointers to functions
   spec_func[CALLI] = calli;
@@ -665,28 +747,27 @@ int main() {
   spec_func[JGE] = jge;
   spec_func[JG] = jg;
 
-
-
   code_to_memory();
+  fin.clear();
+  fin.seekg(0, fin.beg);
+  code_to_memory(); //we have to do it twice
 
   r[14].word = 1048575;
 
   string s;
 
- while (s != "end") {
-  stringstream x;
-  x << execute[r[15].word];
-//  cout << "current -> " << execute[r[15].word] << endl;
-  x >> s;
-    for (int i = 0; i < 52; i++) {
-      if (cmds_info[i].n == s) {
+  while (s != "end") {
+    stringstream x;
+    x << execute[r[15].word];
+     cout << "current -> " << execute[r[15].word] << endl;
+    x >> s;
 
-        if (cmds_info[i].m == RM || cmds_info[i].m == RI) {
+        if (string_cmd[s].second == RM || string_cmd[s].second == RI) {
 
-          if ( special.find(cmds_info[i].c) != special.end() ) {
+          if (special.find(string_cmd[s].first) != special.end()) {
             string l;
             x >> l;
-            spec_func[cmds_info[i].c](l + ":");
+            spec_func[string_cmd[s].first](l + ":");
             continue;
           }
 
@@ -697,11 +778,12 @@ int main() {
           int reg_int = stoi(reg);
           int delta_int = stoi(delta);
 
-          cmds_RM_RI[cmds_info[i].c](reg_int, delta_int); //falls here
+          cmds_RM_RI[string_cmd[s].first](reg_int, delta_int);
           r[15].word++;
+          continue;
         }
 
-        if (cmds_info[i].m == RR) {
+        if (string_cmd[s].second == RR) {
           string reg1, reg2, delta;
           char r1, r2;
           x >> r1 >> reg1 >> r2 >> reg2 >> delta;
@@ -710,12 +792,11 @@ int main() {
           int reg2_int = stoi(reg2);
           int delta_int = stoi(delta);
 
-          cmds_RR[cmds_info[i].c](reg1_int, reg2_int, delta_int);
+          cmds_RR[string_cmd[s].first](reg1_int, reg2_int, delta_int);
           r[15].word++;
+          continue;
         }
-      }
-    }
-}
+  }
 
   fin.close();
   return 0;
