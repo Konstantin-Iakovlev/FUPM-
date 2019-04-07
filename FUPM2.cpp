@@ -328,10 +328,6 @@ int itod (int suffix1, int suffix2, int delta) {
   long long mask = *(long long*)&d;
   r[suffix1 + 1].word = mask >> 32;
   r[suffix1].word = mask % (long long)pow(2, 32);
-//  cout<< "\033[1;31m"  << "r" << suffix2 << "= " << r[suffix2].word << "\033[0m\n";
-//  cout<< "\033[1;31m"  << "r" << suffix1 << "= " << r[suffix1].word << "\033[0m\n";
-//  cout<< "\033[1;31m"  << "r" << suffix1 + 1 << "= " << r[suffix1 + 1].word << "\033[0m\n";
-  //  cout << "\033[1;31m" << r[suffix].word << "\033[0m\n";
   return 0;
 }
 
@@ -346,7 +342,6 @@ int dtoi(int suffix1, int suffix2, int delta) {
 int push(int suffix, int imm) {
   r[14].word--;
   Memory[r[14].word] = r[suffix].word + imm;
-  //  cout << "we pushed "<< Memory[r[14].word] << endl;
   return 0;
 }
 
@@ -379,7 +374,7 @@ int cmpi(int suffix, int imm) {
   if (r[suffix].word == imm) {
     flags.condition = "==";
   }
-  cout << "r" << suffix << "=" << r[suffix].word << " vs " << imm << endl;
+//  cout << "r" << suffix << "=" << r[suffix].word << " vs " << imm << endl;
   return 0;
 }
 
@@ -419,7 +414,6 @@ int syscall(int suffix, int code) {
     r[suffix + 1].word = ans >> 32;
     return 0;
   case 102:
-    //  cout << "\033[1;31m" << r[suffix].word << "\033[0m\n";
     cout << r[suffix].word;
     return 0;
   case 103:
@@ -444,21 +438,18 @@ int halt(int suffix, int delta) { return 0; }
 
 int calli(string l) {
   push(15, 1);
-  // cout << "calli->index " << r[15].word << endl;
   r[15].word = label[l];
   return 0;
 }
 
 int ret(string s) {
   r[15].word = Memory[r[14].word];
-  //  cout << "r15 from ret is " << r[15].word << endl;
   int imm = stoi(s);
   r[14].word += imm + 1;
   return 0;
 }
 
 int call(int suffix1, int suffix2, int imm) {
-  // push (15, 1);
   r[suffix1].word = r[15].word = r[suffix2].word;
   return 0;
 }
@@ -523,9 +514,9 @@ int jg(string l) {
 }
 
 std::set<int> special;
-std::map<int, string> execute;
-std::map <string, pair<int, int> > string_cmd;
-std::map <int, vector<int> > args_RR;
+std::map<int, string> execute; //only command
+std::map <string, pair<int, int> > string_cmd; //cdms_info)
+std::map <int, vector<int> > args_RR; //arguments
 std::map <int, vector<int> > args_RM_RI;
 std::map <int, string> args_special;
 
@@ -557,7 +548,7 @@ int code_to_memory() {
       return 0;
     }
 
-        if (string_cmd[s].second == RM || string_cmd[s].second == RI) {
+        if ( s!= "word" && (string_cmd[s].second == RM || string_cmd[s].second == RI) ) {
 
           if (special.find(string_cmd[s].first) != special.end()) {
             string l;
@@ -566,7 +557,7 @@ int code_to_memory() {
             //    cout << index <<"->"<< s << " args-> " << args_special[index] << endl;
             int token_code = string_cmd[s].first;
             int token = (token_code << 24) + label[l+":"];
-            execute[index] = s + " " + l;
+            execute[index] = s;
             //  cout << index << "-> " << execute[index]  << "args -> "<<label[l+":"] << endl;
             Memory[index++] = token;
             continue;
@@ -586,13 +577,13 @@ int code_to_memory() {
 
           int token_code = string_cmd[s].first;
           int token = (token_code << 24) + (reg_int << 20) + delta_int;
-          execute[index] = s + " r" + reg + " " + delta;
+          execute[index] = s;
           //  cout << index << "-> " << execute[index] << endl;
 
           Memory[index++] = token;
         }
 
-        if (string_cmd[s].second == RR) {
+        if (string_cmd[s].second == RR && s!= "word") {
           string reg1, reg2, delta;
           char r1, r2;
           fin >> r1 >> reg1 >> r2 >> reg2 >> delta;
@@ -610,7 +601,7 @@ int code_to_memory() {
 
           int token = (token_code << 24) + (reg1_int << 20) + (reg2_int << 16) +
                       delta_int;
-          execute[index] = s + " r" + reg1 + " r" + reg2 + " " + delta;
+          execute[index] = s;
           //  cout << index << "-> "<< execute[index] << endl;
 
           Memory[index++] = token;
@@ -757,42 +748,22 @@ int main() {
   string s;
 
   while (s != "end") {
-    stringstream x;
-    x << execute[r[15].word];
-     cout << "current -> " << execute[r[15].word] << endl;
-    x >> s;
-
+      s = execute[r[15].word];
         if (string_cmd[s].second == RM || string_cmd[s].second == RI) {
 
           if (special.find(string_cmd[s].first) != special.end()) {
-            string l;
-            x >> l;
-            spec_func[string_cmd[s].first](l + ":");
+            spec_func[string_cmd[s].first](args_special[r[15].word]);
             continue;
           }
 
-          string reg, delta;
-          char r_char;
-          x >> r_char >> reg >> delta;
-
-          int reg_int = stoi(reg);
-          int delta_int = stoi(delta);
-
-          cmds_RM_RI[string_cmd[s].first](reg_int, delta_int);
+          cmds_RM_RI[string_cmd[s].first](args_RM_RI[r[15].word][0], args_RM_RI[r[15].word][1]);
           r[15].word++;
           continue;
         }
 
         if (string_cmd[s].second == RR) {
-          string reg1, reg2, delta;
-          char r1, r2;
-          x >> r1 >> reg1 >> r2 >> reg2 >> delta;
 
-          int reg1_int = stoi(reg1);
-          int reg2_int = stoi(reg2);
-          int delta_int = stoi(delta);
-
-          cmds_RR[string_cmd[s].first](reg1_int, reg2_int, delta_int);
+          cmds_RR[string_cmd[s].first](args_RR[r[15].word][0], args_RR[r[15].word][1],args_RR[r[15].word][2]);
           r[15].word++;
           continue;
         }
