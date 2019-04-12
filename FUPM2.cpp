@@ -10,7 +10,7 @@
 
 using namespace std;
 
-ifstream fin("ProgrammingC/input.fasm");
+ifstream fin("input.fasm");
 
 enum code {
   HALT = 0,    // done
@@ -450,7 +450,9 @@ int ret(string s) {
 }
 
 int call(int suffix1, int suffix2, int imm) {
-  r[suffix1].word = r[15].word = r[suffix2].word;
+  push(15, 1);
+  r[suffix1].word = r[suffix2].word;
+  r[15].word = r[suffix2].word;
   return 0;
 }
 
@@ -514,14 +516,14 @@ int jg(string l) {
 }
 
 std::set<int> special;
-std::map<int, string> execute; //only command
+std::vector< pair<int, int> > execute(20000); // first--code, second--mode
 std::map <string, pair<int, int> > string_cmd; //cdms_info)
 std::map <int, vector<int> > args_RR; //arguments
 std::map <int, vector<int> > args_RM_RI;
 std::map <int, string> args_special;
 
 int code_to_memory() {
-  int index = 0; // index to Memory
+  int index = 128; // index to Memory (code segment)
   while (!fin.eof()) {
     string s;
     fin >> s;
@@ -543,7 +545,7 @@ int code_to_memory() {
       fin >> start;
       r[15].word = label[start + ":"];
       //  cout << "we start from " << label[start + ":"] << endl;
-      execute[index] = "end";
+      execute[index] = pair<int, int>(-1, -1); //end)
       //  cout << execute[index] << endl;
       return 0;
     }
@@ -557,7 +559,8 @@ int code_to_memory() {
             //    cout << index <<"->"<< s << " args-> " << args_special[index] << endl;
             int token_code = string_cmd[s].first;
             int token = (token_code << 24) + label[l+":"];
-            execute[index] = s;
+            execute[index].first = string_cmd[s].first;
+            execute[index].second = string_cmd[s].second;
             //  cout << index << "-> " << execute[index]  << "args -> "<<label[l+":"] << endl;
             Memory[index++] = token;
             continue;
@@ -570,14 +573,20 @@ int code_to_memory() {
             vector <int> a(2);
           int reg_int = stoi(reg);
           a[0] = reg_int;
-          int delta_int = stoi(delta);
+          int delta_int;
+          if ( label[delta + ":"] > 0 ) {
+            delta_int = label[delta + ":"];
+          } else {
+            delta_int = stoi(delta);
+          }
           a[1] = delta_int;
           args_RM_RI[index] = a;
           //  cout <<index <<"->"<< s << " args-> " << args_RM_RI[index][0] << " "<<args_RM_RI[index][1]<<endl;
 
           int token_code = string_cmd[s].first;
           int token = (token_code << 24) + (reg_int << 20) + delta_int;
-          execute[index] = s;
+          execute[index].first = string_cmd[s].first;
+          execute[index].second = string_cmd[s].second;
           //  cout << index << "-> " << execute[index] << endl;
 
           Memory[index++] = token;
@@ -586,7 +595,12 @@ int code_to_memory() {
         if (string_cmd[s].second == RR && s!= "word") {
           string reg1, reg2, delta;
           char r1, r2;
-          fin >> r1 >> reg1 >> r2 >> reg2 >> delta;
+          if (s != "call") {
+            fin >> r1 >> reg1 >> r2 >> reg2 >> delta;
+          } else {
+            fin >> r1 >> reg1 >> r2 >> reg2;
+            delta = "0";
+          }
 
             vector <int> a(3);
           int reg1_int = stoi(reg1);
@@ -601,7 +615,8 @@ int code_to_memory() {
 
           int token = (token_code << 24) + (reg1_int << 20) + (reg2_int << 16) +
                       delta_int;
-          execute[index] = s;
+          execute[index].first = string_cmd[s].first;
+          execute[index].second = string_cmd[s].second;
           //  cout << index << "-> "<< execute[index] << endl;
 
           Memory[index++] = token;
@@ -747,26 +762,27 @@ int main() {
 
   string s;
 
-  while (s != "end") {
-      s = execute[r[15].word];
-        if (string_cmd[s].second == RM || string_cmd[s].second == RI) {
+  while (execute[r[15].word].first != -1) {
+      int current_mode = execute[r[15].word].second;
+      int current_cmd = execute[r[15].word].first;
+        if (current_mode == RM || current_mode == RI) {
 
-          if (special.find(string_cmd[s].first) != special.end()) {
-            spec_func[string_cmd[s].first](args_special[r[15].word]);
+          if (special.find(current_cmd) != special.end()) {
+            spec_func[current_cmd](args_special[r[15].word]);
             continue;
           }
 
-          cmds_RM_RI[string_cmd[s].first](args_RM_RI[r[15].word][0], args_RM_RI[r[15].word][1]);
+          cmds_RM_RI[current_cmd](args_RM_RI[r[15].word][0], args_RM_RI[r[15].word][1]);
           r[15].word++;
           continue;
         }
 
-        if (string_cmd[s].second == RR) {
 
-          cmds_RR[string_cmd[s].first](args_RR[r[15].word][0], args_RR[r[15].word][1],args_RR[r[15].word][2]);
+          cmds_RR[current_cmd](args_RR[r[15].word][0], args_RR[r[15].word][1],args_RR[r[15].word][2]);
+          if(current_cmd != CALL) {
           r[15].word++;
-          continue;
         }
+
   }
 
   fin.close();
