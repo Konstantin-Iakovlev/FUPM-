@@ -13,43 +13,43 @@ using namespace std;
 ifstream fin("input.fasm");
 
 enum code {
-  HALT = 0,    // done
-  SYSCALL = 1, // done
-  ADD = 2,     // done
-  ADDI = 3,    // done
-  SUB = 4,     // done
-  SUBI = 5,    // done
-  MUL = 6,     // done
-  MULI = 7,    // done
-  DIV = 8,     // done
-  DIVI = 9,    // done
-  LC = 12,     // done
-  SHL = 13,    // done
-  SHLI = 14,   // done
-  SHR = 15,    // done
-  SHRI = 16,   // done
-  AND = 17,    // done, named and_
-  ANDI = 18,   // done
-  OR = 19,     // done named or_
-  ORI = 20,    // done
-  XOR = 21,    // done named xor_
-  XORI = 22,   // done
+  HALT = 0,
+  SYSCALL = 1,
+  ADD = 2,
+  ADDI = 3,
+  SUB = 4,
+  SUBI = 5,
+  MUL = 6,
+  MULI = 7,
+  DIV = 8,
+  DIVI = 9,
+  LC = 12,
+  SHL = 13,
+  SHLI = 14,
+  SHR = 15,
+  SHRI = 16,
+  AND = 17,    // named and_
+  ANDI = 18,
+  OR = 19,     // named or_
+  ORI = 20,
+  XOR = 21,    // named xor_
+  XORI = 22,
   NOT = 23,    // done named not_
-  MOV = 24,    // done
-  ADDD = 32,   // done
-  SUBD = 33,   // done
-  MULD = 34,   // done
-  DIVD = 35,   // done
-  ITOD = 36,   // done
-  DTOI = 37,   // done
-  PUSH = 38,   // done
-  POP = 39,    // done
+  MOV = 24,
+  ADDD = 32,
+  SUBD = 33,
+  MULD = 34,
+  DIVD = 35,
+  ITOD = 36,
+  DTOI = 37,
+  PUSH = 38,
+  POP = 39,
   CALL = 40,
   CALLI = 41,
   RET = 42,
-  CMP = 43,  // done
-  CMPI = 44, // done
-  CMPD = 45, // done
+  CMP = 43,
+  CMPI = 44,
+  CMPD = 45,
   JMP = 46,
   JNE = 47,
   JEQ = 48,
@@ -57,14 +57,14 @@ enum code {
   JL = 50,
   JGE = 51,
   JG = 52,
-  LOAD = 64,   // done
-  STORE = 65,  // done
-  LOAD2 = 66,  // done
-  STORE2 = 67, // done
-  LOADR = 68,  // done
-  LOADR2 = 69, // done
-  STORER = 70, // done
-  STORER2 = 71 // done
+  LOAD = 64,
+  STORE = 65,
+  LOAD2 = 66,
+  STORE2 = 67,
+  LOADR = 68,
+  LOADR2 = 69,
+  STORER = 70,
+  STORER2 = 71
 };
 
 enum mode { RM, RR, RI };
@@ -234,8 +234,6 @@ int muli (int suffix, int imm) {
   long long pro = (long long)r[suffix].word * (long long)imm;
   r[suffix].word = pro % (long long)pow(2, 32);
   r[suffix + 1].word = pro >> 32;
-  //  cout << "r" << suffix <<"= " << r[suffix].word << endl;
-  //  cout << "r"  << suffix + 1 << "="<< r[suffix + 1].word << endl;
   return 0;
 }
 
@@ -374,7 +372,6 @@ int cmpi(int suffix, int imm) {
   if (r[suffix].word == imm) {
     flags.condition = "==";
   }
-//  cout << "r" << suffix << "=" << r[suffix].word << " vs " << imm << endl;
   return 0;
 }
 
@@ -536,7 +533,6 @@ int code_to_memory() {
 
     if (s[s.length() - 1] == ':') {
       label[s] = index;
-      //  cout << "inserted " << s <<"->" << label[s] << endl;
       continue;
     }
 
@@ -544,9 +540,7 @@ int code_to_memory() {
       string start;
       fin >> start;
       r[15].word = label[start + ":"];
-      //  cout << "we start from " << label[start + ":"] << endl;
       execute[index] = pair<int, int>(-1, -1); //end)
-      //  cout << execute[index] << endl;
       return 0;
     }
 
@@ -556,12 +550,10 @@ int code_to_memory() {
             string l;
             fin >> l;
             args_special[index] = l + ":";
-            //    cout << index <<"->"<< s << " args-> " << args_special[index] << endl;
             int token_code = string_cmd[s].first;
             int token = (token_code << 24) + label[l+":"];
             execute[index].first = string_cmd[s].first;
             execute[index].second = string_cmd[s].second;
-            //  cout << index << "-> " << execute[index]  << "args -> "<<label[l+":"] << endl;
             Memory[index++] = token;
             continue;
           }
@@ -581,13 +573,11 @@ int code_to_memory() {
           }
           a[1] = delta_int;
           args_RM_RI[index] = a;
-          //  cout <<index <<"->"<< s << " args-> " << args_RM_RI[index][0] << " "<<args_RM_RI[index][1]<<endl;
 
           int token_code = string_cmd[s].first;
           int token = (token_code << 24) + (reg_int << 20) + delta_int;
           execute[index].first = string_cmd[s].first;
           execute[index].second = string_cmd[s].second;
-          //  cout << index << "-> " << execute[index] << endl;
 
           Memory[index++] = token;
         }
@@ -610,14 +600,12 @@ int code_to_memory() {
           int delta_int = stoi(delta);
           a[2] = delta_int;
           args_RR[index] = a;
-          //  cout<<index<<"->" << s << " args-> " <<args_RR[index][0]<<" "<<args_RR[index][1]<<" "<<args_RR[index][2] <<endl;
           int token_code = string_cmd[s].first;
 
           int token = (token_code << 24) + (reg1_int << 20) + (reg2_int << 16) +
                       delta_int;
           execute[index].first = string_cmd[s].first;
           execute[index].second = string_cmd[s].second;
-          //  cout << index << "-> "<< execute[index] << endl;
 
           Memory[index++] = token;
         }
