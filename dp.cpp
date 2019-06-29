@@ -41,7 +41,7 @@ int main() {
     for (int i = 1; i < m; i++) {
         for (int j = 1; j < n; j++) {
             maxim[i][j] = max(maxim[i - 1][j], maxim[i][j - 1]) + matrix[i][j]; //всего 2 способа зайти в клетку
-            for (int l = 0; l <= 2 * k + 1; l++) {
+            for (int l = 0; l <= 2 * 200 + 1; l++) {
                 //данный переход лучше осознать, записав непосредственно длину пути
                 //из начала в [i - 1][j]. 
                 //maxim[i][j] - l = maxim[i - 1][j] - x1 + matrix[i][j]
