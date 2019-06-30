@@ -55,5 +55,11 @@ int main() {
   }
 
   cout << GetMinCost(points, 0, n - 1, n, table) << endl;
+
+  for (int i = 0; i < n; i++) {
+    free(table[i]);
+  }
+  free(table);
+  
   return 0;
 }
